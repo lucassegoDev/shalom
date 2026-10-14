@@ -1,0 +1,629 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#e0557a">
+<title>Shalom</title>
+<style>
+:root{--bg:#fdf6f8;--card:#fff;--ink:#3a2a33;--muted:#8a7480;--line:#f0e1e6;--bleed:#e0557a;--bleed-soft:#fbd3dd;--fertile:#dff3e8;--ov:#2f8f5b}
+*{box-sizing:border-box}
+body{margin:0;font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;background:var(--bg);color:var(--ink);line-height:1.45;-webkit-font-smoothing:antialiased}
+header.top{display:flex;justify-content:space-between;align-items:center;max-width:480px;margin:0 auto;padding:14px 16px 4px}
+.logo{font-weight:700;font-size:1.3rem;color:var(--bleed)}
+main{max-width:480px;margin:0 auto;padding:8px 14px 100px}
+.tab{display:none}
+.tab.active{display:block}
+.card{background:var(--card);border-radius:18px;padding:16px;margin-bottom:14px;box-shadow:0 2px 8px rgba(120,60,80,.07)}
+h2{font-size:1.1rem;margin:4px 0 12px}
+h3{font-size:1rem;margin:0 0 8px}
+.muted{color:var(--muted);font-size:.9rem}
+input,textarea,button{font:inherit}
+input[type=text],input[type=date],input[type=number],textarea{width:100%;padding:11px;border-radius:12px;border:1px solid var(--line);background:#fff;color:var(--ink)}
+textarea{resize:vertical}
+button{border:none;border-radius:999px;padding:11px 16px;background:var(--bleed);color:#fff;cursor:pointer}
+button.ghost{background:#fff;color:var(--bleed);border:1px solid var(--bleed)}
+button.tiny{padding:5px 10px;font-size:.85rem}
+button:disabled{opacity:.4}
+.chips{display:flex;flex-wrap:wrap;gap:8px;margin:8px 0}
+.chip{background:#fff;color:var(--ink);border:1px solid var(--line);border-radius:999px;padding:7px 12px;font-size:.92rem;cursor:pointer}
+.chip.on{background:var(--bleed);border-color:var(--bleed);color:#fff}
+.ring{position:relative;width:230px;height:230px;margin:6px auto 4px}
+.ring svg{width:100%;height:100%}
+.ringText{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center}
+.ringDay{font-size:2rem;font-weight:700}
+.ringPhase{font-size:.95rem;color:var(--muted)}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px}
+.stat{background:#fff;border-radius:16px;padding:12px;box-shadow:0 2px 8px rgba(120,60,80,.07)}
+.stat span{display:block;color:var(--muted);font-size:.8rem}
+.stat b{font-size:.98rem}
+.row{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:8px 0;border-bottom:1px dashed var(--line);font-size:.95rem}
+.verse-ref{font-weight:700;font-size:1.05rem;color:var(--bleed)}
+.oracion{font-style:italic}
+.tip{background:#f7eef8;border-radius:14px;padding:12px;font-size:.95rem}
+.cal-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}
+.cal{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;text-align:center}
+.dow{font-size:.75rem;color:var(--muted);padding-bottom:4px}
+.day{aspect-ratio:1;display:flex;align-items:center;justify-content:center;border-radius:50%;cursor:pointer;font-size:.92rem;position:relative}
+.day.blank{cursor:default}
+.day.fertile{background:var(--fertile)}
+.day.pred{box-shadow:inset 0 0 0 2px #e9a3b5}
+.day.bleed{background:var(--bleed);color:#fff;font-weight:600}
+.day.ov::after{content:"";position:absolute;bottom:4px;width:5px;height:5px;border-radius:50%;background:var(--ov)}
+.day.today{box-shadow:inset 0 0 0 2px var(--ink)}
+.legend{display:flex;flex-wrap:wrap;gap:10px;font-size:.8rem;color:var(--muted);margin-top:12px}
+.legend i{display:inline-block;width:12px;height:12px;border-radius:50%;margin-right:4px;vertical-align:middle}
+.bars{display:flex;align-items:flex-end;gap:8px;height:150px;margin-top:12px}
+.barCol{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;height:100%;font-size:.75rem}
+.bar{width:100%;max-width:36px;background:var(--bleed-soft);border-radius:8px 8px 0 0;min-height:4px}
+.barVal{margin-bottom:4px;color:var(--muted)}
+.tabbar{position:fixed;bottom:0;left:0;right:0;max-width:480px;margin:0 auto;background:#fff;border-top:1px solid var(--line);display:flex;justify-content:space-around;padding:8px 6px calc(8px + env(safe-area-inset-bottom))}
+.tabbar button{background:none;color:var(--muted);padding:4px 6px;font-size:.75rem;display:flex;flex-direction:column;align-items:center;gap:2px}
+.tabbar .ico{font-size:1.2rem}
+.tabbar button.active{color:var(--bleed)}
+dialog{border:none;border-radius:20px;width:min(92vw,420px);padding:18px;color:var(--ink)}
+dialog::backdrop{background:rgba(40,20,30,.35)}
+</style>
+</head>
+<body>
+<header class="top"><span class="logo">Shalom</span><span class="muted" id="hoyFecha"></span></header>
+
+<main>
+
+  <section class="tab active" id="tab-hoy">
+    <div class="ring">
+      <svg viewBox="0 0 200 200">
+        <circle cx="100" cy="100" r="85" fill="none" stroke="#f3e4e9" stroke-width="16"/>
+        <circle id="ringArc" cx="100" cy="100" r="85" fill="none" stroke="#e0557a" stroke-width="16" stroke-linecap="round" transform="rotate(-90 100 100)" stroke-dasharray="534.07" stroke-dashoffset="534.07"/>
+      </svg>
+      <div class="ringText">
+        <div class="ringDay" id="ringDay">–</div>
+        <div class="ringPhase" id="ringPhase">Registrá tu período</div>
+      </div>
+    </div>
+
+    <div class="grid2">
+      <div class="stat"><span>Próximo período</span><b id="sNext">–</b></div>
+      <div class="stat"><span>Ventana fértil</span><b id="sFertile">–</b></div>
+    </div>
+
+    <div class="card">
+      <div class="tip" id="tip"></div>
+      <button id="registrarHoy" style="width:100%;margin-top:12px">Registrar cómo estoy hoy</button>
+    </div>
+
+    <div class="card" id="verseCard"></div>
+
+    <div class="card">
+      <h3>Oración de hoy</h3>
+      <textarea id="oracionHoy" rows="3" placeholder="Escribí lo que querés decirle a Dios hoy"></textarea>
+      <button id="guardarOracion" class="ghost" style="margin-top:10px;width:100%">Guardar oración</button>
+    </div>
+
+    <div class="card">
+      <h3>Hablá con Shalom</h3>
+      <p class="muted">Consejería cristiana con IA. No reemplaza a tu pastor, a tu iglesia ni a tu médico. Si estás en peligro, llamá al 911 (Argentina).</p>
+      <textarea id="pregunta" rows="2" placeholder="Ej: ¿cómo oro cuando estoy cansada?"></textarea>
+      <label class="muted" style="display:flex;gap:8px;align-items:flex-start;margin:8px 0"><input type="checkbox" id="consent" style="margin-top:3px"> Acepto que mi pregunta y un resumen de mi fase y ciclo se envíen a la IA de Google. En la versión gratuita, Google puede usar esos datos para mejorar sus productos. Nunca se envía mi historial completo.</label>
+      <button id="preguntar" class="ghost" style="width:100%">Preguntar</button>
+      <p class="muted" id="respuesta"></p>
+    </div>
+  </section>
+
+  <section class="tab" id="tab-cal">
+    <div class="card">
+      <div class="cal-head">
+        <button class="ghost tiny" id="prevMes">‹</button>
+        <h2 id="mesTitulo" style="margin:0;text-transform:capitalize"></h2>
+        <button class="ghost tiny" id="nextMes">›</button>
+      </div>
+      <div class="cal" id="cal"></div>
+      <div class="legend">
+        <span><i style="background:var(--bleed)"></i>Período</span>
+        <span><i style="box-shadow:inset 0 0 0 2px #e9a3b5"></i>Próximo (estimado)</span>
+        <span><i style="background:var(--fertile)"></i>Fértil (estimado)</span>
+        <span><i style="background:var(--ov)"></i>Ovulación</span>
+      </div>
+    </div>
+    <p class="muted">Tocá un día para marcar el sangrado, anotar síntomas o cómo te sentiste.</p>
+  </section>
+
+  <section class="tab" id="tab-diario">
+    <div class="card"><h2>Tus números</h2><div id="stats"></div></div>
+    <div class="card">
+      <h3>Peticiones de oración</h3>
+      <div style="display:flex;gap:8px">
+        <input type="text" id="peticionTxt" placeholder="Por qué orás">
+        <button id="addPeticion" class="tiny">Agregar</button>
+      </div>
+      <div id="peticiones" style="margin-top:8px"></div>
+    </div>
+    <div class="card"><h3>Registros</h3><div id="registros"></div></div>
+  </section>
+
+  <section class="tab" id="tab-biblia">
+    <div class="card"><h3>Mis favoritos</h3><div id="favoritos"></div></div>
+    <div id="todosVersiculos"></div>
+  </section>
+
+  <section class="tab" id="tab-ajustes">
+    <div class="card">
+      <h3>Ciclo habitual</h3>
+      <p class="muted">Se usa mientras no tengas suficientes registros para calcularlo.</p>
+      <input type="number" id="cicloHabitual" min="21" max="40" value="28">
+      <button id="guardarCiclo" class="ghost" style="margin-top:10px;width:100%">Guardar</button>
+    </div>
+    <div class="card">
+      <h3>Mis datos</h3>
+      <p class="muted">Todo se guarda solo en este celular.</p>
+      <button id="exportar" class="ghost" style="width:100%">Exportar mis datos</button>
+      <button id="borrar" class="ghost" style="width:100%;margin-top:8px;color:#b00020;border-color:#b00020">Borrar todo</button>
+    </div>
+    <p class="muted" style="font-size:.8rem">Shalom es una herramienta de seguimiento. No reemplaza la consulta médica ni sirve como método anticonceptivo.</p>
+  </section>
+
+</main>
+
+<dialog id="dlg">
+  <h2 id="dlgTitulo"></h2>
+  <label class="row" style="border:none"><span>Estoy con sangrado</span><input type="checkbox" id="dlgSangra" style="width:20px;height:20px"></label>
+  <h3 style="margin-top:12px">Síntomas</h3>
+  <div class="chips" id="dlgSintomas"></div>
+  <h3>Ánimo</h3>
+  <div class="chips" id="dlgAnimo"></div>
+  <h3>Energía</h3>
+  <div class="chips" id="dlgEnergia"></div>
+  <h3>Nota</h3>
+  <textarea id="dlgNota" rows="2"></textarea>
+  <div style="display:flex;gap:8px;margin-top:14px;justify-content:flex-end">
+    <button class="ghost" id="dlgCancelar">Cancelar</button>
+    <button id="dlgGuardar">Guardar</button>
+  </div>
+</dialog>
+
+<nav class="tabbar">
+  <button data-tab="tab-hoy" class="active"><span class="ico">🌸</span>Hoy</button>
+  <button data-tab="tab-cal"><span class="ico">📅</span>Calendario</button>
+  <button data-tab="tab-diario"><span class="ico">📓</span>Diario</button>
+  <button data-tab="tab-biblia"><span class="ico">📖</span>Biblia</button>
+  <button data-tab="tab-ajustes"><span class="ico">⚙️</span>Ajustes</button>
+</nav>
+
+<script>
+const KEY = "shalom_v2";
+const AI_ENDPOINT = "http://localhost:3000/preguntar"; // Al publicar el servidor, cambiar por su URL https.
+const DAY = 86400000;
+
+const SINTOMAS = ["Cólicos","Dolor de cabeza","Hinchazón","Acné","Sensibilidad en los pechos","Antojos","Cansancio","Insomnio","Náuseas"];
+const ANIMOS = [[1,"😔"],[2,"😕"],[3,"😐"],[4,"🙂"],[5,"😄"]];
+const ENERGIAS = [[1,"Muy baja"],[2,"Baja"],[3,"Media"],[4,"Alta"],[5,"Muy alta"]];
+
+const TIPS = {
+  menstrual: "Descansá todo lo que puedas. Algo caliente o una bolsa de agua tibia pueden aliviar los cólicos.",
+  folicular: "Buen momento para empezar proyectos y sumar ejercicio suave.",
+  ovulacion: "Muchas personas notan más energía y ganas de compartir. Tomá agua y cuidá el descanso.",
+  lutea: "Puede aparecer sensibilidad o hinchazón. Priorizá el sueño, las comidas regulares y las pausas.",
+  consuelo: "Si el período se atrasó mucho o tenés dudas, consultá con tu médico."
+};
+const PHASE_NAME = { menstrual:"Menstruación", folicular:"Fase folicular", ovulacion:"Ovulación", lutea:"Fase lútea", consuelo:"Revisá tu ciclo" };
+const PHASE_COLOR = { menstrual:"#e0557a", folicular:"#6fa8dc", ovulacion:"#2f8f5b", lutea:"#9b7fc7", consuelo:"#8a7480" };
+
+const VERSES = {
+  menstrual: [
+    { ref: "Mateo 11:28", reflexion: "Descansar también es parte de cuidarse. Hoy no hace falta rendir al cien por ciento.", oracion: "Señor, gracias por cuidar de mí en los días de cansancio. Dame paz para lo que hoy sí puedo hacer." },
+    { ref: "Salmo 30:5", reflexion: "Hay noches largas, pero la mañana trae alegría. Este momento también pasa.", oracion: "Padre, sostenme en estos días y recordame que la alegría vuelve." }
+  ],
+  folicular: [
+    { ref: "Lamentaciones 3:22-23", reflexion: "Cada mañana es una oportunidad nueva. Lo de ayer no define lo que viene.", oracion: "Señor, renová mis fuerzas y mis proyectos. Ayudame a empezar con confianza." },
+    { ref: "Isaías 43:19", reflexion: "Dios puede abrir caminos donde parecía no haber ninguno.", oracion: "Gracias por hacer cosas nuevas. Ayudame a verlas cuando empiezan a brotar." },
+    { ref: "2 Corintios 5:17", reflexion: "En Cristo uno puede empezar de nuevo, sin arrastrar siempre lo viejo.", oracion: "Gracias, Señor, porque en vos puedo empezar otra vez." }
+  ],
+  ovulacion: [
+    { ref: "Juan 15:5", reflexion: "El fruto crece cuando uno permanece conectado a la fuente.", oracion: "Espíritu Santo, que mi día dé fruto para la gloria de Dios." },
+    { ref: "Gálatas 5:22", reflexion: "El fruto del Espíritu se nota en lo cotidiano: en el trato, en la paciencia y en la alegría.", oracion: "Padre, hoy quiero vivir con amor y gozo en lo pequeño." }
+  ],
+  lutea: [
+    { ref: "Santiago 1:19", reflexion: "Si el ánimo está más sensible, no hace falta decidir ni responder todo hoy.", oracion: "Jesús, dame paciencia y dominio propio en mis palabras y reacciones." },
+    { ref: "Filipenses 4:6-7", reflexion: "Llevá lo que te preocupa a Dios antes de cargarlo sola.", oracion: "Señor, cambiá mi ansiedad por tu paz." },
+    { ref: "Gálatas 5:23", reflexion: "El dominio propio también es fruto del Espíritu: no hace falta controlarlo todo con fuerza propia.", oracion: "Señor, hacé crecer en mí el dominio propio." }
+  ],
+  consuelo: [
+    { ref: "Isaías 41:10", reflexion: "Nadie tiene que cargar con esto a solas. Orar y cuidarte son compatibles.", oracion: "Padre, fortaleceme. Si necesito ayuda médica, dame sabiduría para buscarla." },
+    { ref: "2 Corintios 12:9", reflexion: "En la debilidad también hay espacio para la gracia.", oracion: "Gracias, Señor, porque tu gracia me basta." },
+    { ref: "Salmo 34:18", reflexion: "Dios está cerca de los quebrantados. Si el dolor es fuerte, buscá también atención médica.", oracion: "Padre, acercate a mí en este momento." }
+  ]
+};
+
+let verseIdx = 0;
+let currentPhase = "consuelo";
+let calRef = new Date();
+let dlgIso = null;
+let draft = {};
+
+const $ = id => document.getElementById(id);
+const load = () => {
+  const d = JSON.parse(localStorage.getItem(KEY) || "null") || {};
+  return { sangrado: d.sangrado || [], logs: d.logs || {}, peticiones: d.peticiones || [], favoritos: d.favoritos || [], cicloHabitual: d.cicloHabitual || 28 };
+};
+const save = d => localStorage.setItem(KEY, JSON.stringify(d));
+const parseDate = s => { const [y, m, dd] = s.split("-").map(Number); return new Date(y, m - 1, dd); };
+const toISO = dt => `${dt.getFullYear()}-${String(dt.getMonth() + 1).padStart(2, "0")}-${String(dt.getDate()).padStart(2, "0")}`;
+const today = () => { const n = new Date(); return new Date(n.getFullYear(), n.getMonth(), n.getDate()); };
+const addDays = (dt, n) => new Date(dt.getFullYear(), dt.getMonth(), dt.getDate() + n);
+const daysBetween = (a, b) => Math.round((b - a) / DAY);
+const fmt = dt => dt.toLocaleDateString("es-AR", { day: "numeric", month: "long" });
+const fmtCorta = dt => dt.toLocaleDateString("es-AR", { day: "numeric", month: "short" });
+const mean = arr => arr.reduce((a, b) => a + b, 0) / arr.length;
+const esc = s => String(s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+
+// Los días marcados con sangrado forman "tramos". Cada tramo = un período.
+function analyze(d) {
+  const dates = [...new Set(d.sangrado)].sort().map(parseDate);
+  const runs = [];
+  dates.forEach(dt => {
+    const r = runs[runs.length - 1];
+    if (r && daysBetween(r.end, dt) === 1) { r.end = dt; r.len++; }
+    else runs.push({ start: dt, end: dt, len: 1 });
+  });
+  const starts = runs.map(r => r.start);
+  const lens = [];
+  for (let i = 1; i < starts.length; i++) {
+    const n = daysBetween(starts[i - 1], starts[i]);
+    if (n >= 18 && n <= 60) lens.push(n);
+  }
+  const recentLens = lens.slice(-6);
+  const avgCycle = recentLens.length ? Math.round(mean(recentLens)) : d.cicloHabitual;
+  const pl = runs.slice(-6).map(r => r.len).filter(n => n <= 10);
+  const avgPeriod = pl.length ? Math.round(mean(pl)) : 5;
+  return { starts, recentLens, avgCycle, avgPeriod, bleed: new Set(d.sangrado) };
+}
+
+// Ciclos pasados (con sus ovulaciones y ventanas fértiles) + el próximo estimado.
+function buildCycles(a) {
+  if (!a.starts.length) return [];
+  const list = a.starts.map((s, i) => {
+    const diff = i < a.starts.length - 1 ? daysBetween(s, a.starts[i + 1]) : a.avgCycle;
+    const len = diff >= 18 && diff <= 60 ? diff : a.avgCycle;
+    return { start: s, len, predicted: false };
+  });
+  const last = a.starts[a.starts.length - 1];
+  list.push({ start: addDays(last, a.avgCycle), len: a.avgCycle, predicted: true });
+  list.forEach(c => {
+    const ovDay = Math.max(c.len - 14, a.avgPeriod + 1);
+    c.ov = addDays(c.start, ovDay - 1);
+    c.fs = addDays(c.ov, -5);
+    c.fe = addDays(c.ov, 1);
+    c.end = addDays(c.start, c.len - 1);
+  });
+  return list;
+}
+
+function status(a) {
+  if (!a.starts.length) return null;
+  const t = today();
+  const last = a.starts[a.starts.length - 1];
+  const dayNum = daysBetween(last, t) + 1;
+  const bleedingToday = a.bleed.has(toISO(t));
+  const ovDayNum = Math.max(a.avgCycle - 14, a.avgPeriod + 1);
+  let phase;
+  if (dayNum > a.avgCycle + 7 && !bleedingToday) phase = "consuelo";
+  else if (bleedingToday || dayNum <= a.avgPeriod) phase = "menstrual";
+  else if (dayNum < ovDayNum) phase = "folicular";
+  else if (dayNum === ovDayNum) phase = "ovulacion";
+  else phase = "lutea";
+  return { phase, dayNum };
+}
+
+function setRing(p, color) {
+  const C = 534.07;
+  $("ringArc").setAttribute("stroke-dashoffset", C * (1 - p));
+  $("ringArc").setAttribute("stroke", color);
+}
+
+function render() {
+  const d = load();
+  const a = analyze(d);
+  const cycles = buildCycles(a);
+  const st = status(a);
+  const t = today();
+  $("hoyFecha").textContent = t.toLocaleDateString("es-AR", { weekday: "long", day: "numeric", month: "long" });
+
+  if (!st) {
+    currentPhase = "consuelo";
+    $("ringDay").textContent = "–";
+    $("ringPhase").textContent = "Registrá tu período";
+    setRing(0, PHASE_COLOR.menstrual);
+    $("sNext").textContent = "–";
+    $("sFertile").textContent = "–";
+    $("tip").textContent = "Tocá el calendario y marcá el primer día de tu período para empezar.";
+  } else {
+    currentPhase = st.phase;
+    $("ringDay").textContent = `Día ${st.dayNum}`;
+    $("ringPhase").textContent = PHASE_NAME[st.phase];
+    setRing(Math.min(st.dayNum / a.avgCycle, 1), PHASE_COLOR[st.phase]);
+    const nextC = cycles.find(c => c.predicted);
+    $("sNext").textContent = nextC.start >= t ? fmt(nextC.start) : "Ya debería haber empezado";
+    const fertile = cycles.find(c => c.fe >= t);
+    $("sFertile").textContent = fertile ? `${fmtCorta(fertile.fs)} – ${fmtCorta(fertile.fe)}` : "–";
+    $("tip").textContent = TIPS[st.phase];
+  }
+
+  renderVerse();
+  renderCalendar();
+  renderDiario(d, a);
+  renderBiblia(d);
+}
+
+function verseHTML(v, fav) {
+  return `<div class="verse-ref">${v.ref}</div>
+    <p>${v.reflexion}</p>
+    <p class="oracion">${v.oracion}</p>
+    <p class="muted">Leé el texto completo en tu Biblia.</p>
+    <button class="ghost tiny" data-fav="${v.ref}">${fav ? "★ Guardado" : "☆ Guardar"}</button>`;
+}
+
+function renderVerse() {
+  const d = load();
+  const list = VERSES[currentPhase] || VERSES.consuelo;
+  const v = list[verseIdx % list.length];
+  $("verseCard").innerHTML = `<h3>Versículo de hoy</h3>${verseHTML(v, d.favoritos.includes(v.ref))}
+    <button class="ghost tiny" id="otroVers" style="margin-top:8px">Otro versículo</button>`;
+  $("otroVers").onclick = () => { verseIdx++; renderVerse(); };
+}
+
+function renderBiblia(d) {
+  const favs = Object.values(VERSES).flat().filter(v => d.favoritos.includes(v.ref));
+  $("favoritos").innerHTML = favs.length
+    ? favs.map(v => verseHTML(v, true)).join('<hr style="border:none;border-top:1px dashed var(--line);margin:12px 0">')
+    : '<p class="muted">Todavía no guardaste favoritos. Tocá ☆ en cualquier versículo.</p>';
+  $("todosVersiculos").innerHTML = Object.keys(VERSES).map(p =>
+    `<div class="card"><h3>${PHASE_NAME[p]}</h3>${VERSES[p].map(v => verseHTML(v, d.favoritos.includes(v.ref))).join('<hr style="border:none;border-top:1px dashed var(--line);margin:12px 0">')}</div>`
+  ).join("");
+}
+
+function dayClasses(dt, iso, a, cycles, t) {
+  const c = [];
+  const bleed = a.bleed.has(iso);
+  if (bleed) c.push("bleed");
+  cycles.forEach(cy => {
+    if (cy.predicted && !bleed && dt >= cy.start && dt <= addDays(cy.start, a.avgPeriod - 1)) c.push("pred");
+    if (dt >= cy.fs && dt <= cy.fe) c.push("fertile");
+    if (toISO(dt) === toISO(cy.ov)) c.push("ov");
+  });
+  if (iso === t) c.push("today");
+  return [...new Set(c)].join(" ");
+}
+
+function renderCalendar() {
+  const d = load();
+  const a = analyze(d);
+  const cycles = buildCycles(a);
+  const y = calRef.getFullYear(), m = calRef.getMonth();
+  $("mesTitulo").textContent = new Date(y, m, 1).toLocaleDateString("es-AR", { month: "long", year: "numeric" });
+  const offset = (new Date(y, m, 1).getDay() + 6) % 7;
+  const total = new Date(y, m + 1, 0).getDate();
+  const t = toISO(today());
+  let html = ["L", "M", "M", "J", "V", "S", "D"].map(x => `<div class="dow">${x}</div>`).join("");
+  for (let i = 0; i < offset; i++) html += `<div class="day blank"></div>`;
+  for (let day = 1; day <= total; day++) {
+    const dt = new Date(y, m, day);
+    const iso = toISO(dt);
+    html += `<div class="day ${dayClasses(dt, iso, a, cycles, t)}" data-open="${iso}">${day}</div>`;
+  }
+  $("cal").innerHTML = html;
+}
+
+function renderDiario(d, a) {
+  let stats = `<div class="row"><span>Duración promedio del ciclo</span><b>${a.avgCycle} días</b></div>
+    <div class="row"><span>Duración promedio del sangrado</span><b>${a.avgPeriod} días</b></div>`;
+  const cyc = a.recentLens;
+  if (cyc.length >= 2) {
+    stats += `<div class="row"><span>Variación entre ciclos</span><b>${Math.max(...cyc) - Math.min(...cyc)} días</b></div>`;
+  }
+  if (cyc.length) {
+    const max = Math.max(...cyc, 40);
+    stats += `<div class="bars">` + cyc.map(n =>
+      `<div class="barCol"><span class="barVal">${n}</span><div class="bar" style="height:${Math.round(n / max * 110)}px"></div></div>`
+    ).join("") + `</div>`;
+  } else {
+    stats += `<p class="muted">Usando tu ciclo habitual (Ajustes). Cuando registres dos ciclos completos vas a ver el gráfico.</p>`;
+  }
+  $("stats").innerHTML = stats;
+
+  $("peticiones").innerHTML = d.peticiones.map(p =>
+    `<div class="row"><span style="${p.respondida ? "text-decoration:line-through;color:var(--muted)" : ""}">${esc(p.texto)}</span>
+     <span><button class="ghost tiny" data-pet-toggle="${p.id}">${p.respondida ? "Respondida ✓" : "Marcar respondida"}</button>
+     <button class="ghost tiny" data-pet-del="${p.id}">Quitar</button></span></div>`
+  ).join("") || '<p class="muted">Sin peticiones todavía.</p>';
+
+  const keys = Object.keys(d.logs).sort().reverse();
+  $("registros").innerHTML = keys.map(iso => {
+    const L = d.logs[iso];
+    const mood = L.animo ? ANIMOS.find(x => x[0] === L.animo)[1] : "";
+    const extra = [L.sintomas.length ? esc(L.sintomas.join(", ")) : "", L.nota ? esc(L.nota) : ""].filter(Boolean).join(" · ");
+    return `<div class="row" style="cursor:pointer" data-open="${iso}"><div><b>${fmt(parseDate(iso))}</b> ${mood}
+      ${extra ? `<div class="muted">${extra}</div>` : ""}
+      ${L.oracion ? `<div class="oracion muted">“${esc(L.oracion)}”</div>` : ""}</div></div>`;
+  }).join("") || '<p class="muted">Todavía no hay registros.</p>';
+}
+
+function chipGroup(container, items, isOn, onClick) {
+  container.innerHTML = "";
+  items.forEach(([val, label]) => {
+    const b = document.createElement("button");
+    b.type = "button";
+    b.className = "chip" + (isOn(val) ? " on" : "");
+    b.textContent = label;
+    b.onclick = () => { onClick(val); renderDlgChips(); };
+    container.append(b);
+  });
+}
+
+function renderDlgChips() {
+  chipGroup($("dlgSintomas"), SINTOMAS.map(s => [s, s]),
+    v => draft.sintomas.includes(v),
+    v => { draft.sintomas = draft.sintomas.includes(v) ? draft.sintomas.filter(x => x !== v) : [...draft.sintomas, v]; });
+  chipGroup($("dlgAnimo"), ANIMOS,
+    v => draft.animo === v,
+    v => { draft.animo = draft.animo === v ? null : v; });
+  chipGroup($("dlgEnergia"), ENERGIAS,
+    v => draft.energia === v,
+    v => { draft.energia = draft.energia === v ? null : v; });
+}
+
+function openDay(iso) {
+  dlgIso = iso;
+  const d = load();
+  const log = d.logs[iso] || {};
+  draft = {
+    sintomas: [...(log.sintomas || [])],
+    animo: log.animo ?? null,
+    energia: log.energia ?? null,
+    nota: log.nota || "",
+    oracion: log.oracion || ""
+  };
+  $("dlgTitulo").textContent = fmt(parseDate(iso));
+  $("dlgSangra").checked = d.sangrado.includes(iso);
+  $("dlgSangra").disabled = iso > toISO(today());
+  $("dlgNota").value = draft.nota;
+  renderDlgChips();
+  $("dlg").showModal();
+}
+
+document.addEventListener("click", e => {
+  const open = e.target.closest("[data-open]");
+  if (open) return openDay(open.dataset.open);
+
+  const fav = e.target.closest("[data-fav]");
+  if (fav) {
+    const d = load();
+    const ref = fav.dataset.fav;
+    d.favoritos = d.favoritos.includes(ref) ? d.favoritos.filter(x => x !== ref) : [...d.favoritos, ref];
+    save(d);
+    return render();
+  }
+
+  const pt = e.target.closest("[data-pet-toggle]");
+  if (pt) {
+    const d = load();
+    const p = d.peticiones.find(x => String(x.id) === pt.dataset.petToggle);
+    if (p) { p.respondida = !p.respondida; save(d); render(); }
+    return;
+  }
+
+  const pd = e.target.closest("[data-pet-del]");
+  if (pd) {
+    const d = load();
+    d.peticiones = d.peticiones.filter(x => String(x.id) !== pd.dataset.petDel);
+    save(d);
+    render();
+  }
+});
+
+document.querySelectorAll(".tabbar button").forEach(b => {
+  b.onclick = () => {
+    document.querySelectorAll(".tabbar button").forEach(x => x.classList.toggle("active", x === b));
+    document.querySelectorAll(".tab").forEach(s => s.classList.toggle("active", s.id === b.dataset.tab));
+    window.scrollTo(0, 0);
+  };
+});
+
+$("prevMes").onclick = () => { calRef = new Date(calRef.getFullYear(), calRef.getMonth() - 1, 1); renderCalendar(); };
+$("nextMes").onclick = () => { calRef = new Date(calRef.getFullYear(), calRef.getMonth() + 1, 1); renderCalendar(); };
+
+$("registrarHoy").onclick = () => openDay(toISO(today()));
+$("dlgCancelar").onclick = () => $("dlg").close();
+$("dlgGuardar").onclick = () => {
+  const d = load();
+  const iso = dlgIso;
+  if ($("dlgSangra").checked) { if (!d.sangrado.includes(iso)) d.sangrado.push(iso); }
+  else d.sangrado = d.sangrado.filter(x => x !== iso);
+  draft.nota = $("dlgNota").value.trim();
+  const empty = !draft.sintomas.length && draft.animo === null && draft.energia === null && !draft.nota && !draft.oracion;
+  if (empty) delete d.logs[iso];
+  else d.logs[iso] = draft;
+  save(d);
+  $("dlg").close();
+  render();
+};
+
+$("guardarOracion").onclick = () => {
+  const txt = $("oracionHoy").value.trim();
+  if (!txt) return;
+  const d = load();
+  const iso = toISO(today());
+  const log = d.logs[iso] || { sintomas: [], animo: null, energia: null, nota: "" };
+  log.oracion = txt;
+  d.logs[iso] = log;
+  save(d);
+  $("oracionHoy").value = "";
+  $("oracionHoy").placeholder = "Guardada en tu diario ✓";
+  render();
+};
+
+$("addPeticion").onclick = () => {
+  const txt = $("peticionTxt").value.trim();
+  if (!txt) return;
+  const d = load();
+  d.peticiones.push({ id: Date.now(), texto: txt, respondida: false });
+  save(d);
+  $("peticionTxt").value = "";
+  render();
+};
+
+$("guardarCiclo").onclick = () => {
+  const n = parseInt($("cicloHabitual").value, 10);
+  if (!(n >= 21 && n <= 40)) return alert("Poné un número entre 21 y 40 días.");
+  const d = load();
+  d.cicloHabitual = n;
+  save(d);
+  render();
+};
+
+$("exportar").onclick = () => {
+  const blob = new Blob([JSON.stringify(load(), null, 2)], { type: "application/json" });
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = "mis-datos-shalom.json";
+  a.click();
+};
+
+$("borrar").onclick = () => {
+  if (confirm("¿Borrar todos los datos de este celular?")) {
+    localStorage.removeItem(KEY);
+    verseIdx = 0;
+    render();
+  }
+};
+
+$("preguntar").onclick = async () => {
+  const q = $("pregunta").value.trim();
+  const out = $("respuesta");
+  if (!q) return;
+  if (!$("consent").checked) { out.textContent = "Marcá la casilla de consentimiento para usar la IA."; return; }
+  if (!AI_ENDPOINT) { out.textContent = "La IA todavía no está configurada."; return; }
+  const d = load();
+  const a = analyze(d);
+  const st = status(a);
+  const resumen = st ? { fase: PHASE_NAME[st.phase], dia_del_ciclo: st.dayNum, duracion_promedio_ciclo: a.avgCycle } : null;
+  out.textContent = "Pensando...";
+  try {
+    const r = await fetch(AI_ENDPOINT, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ pregunta: q, resumen })
+    });
+    if (!r.ok) throw new Error("respuesta no válida");
+    const j = await r.json();
+    out.textContent = j.respuesta || "No pude responder ahora. Probá de nuevo.";
+  } catch (e) {
+    out.textContent = "No se pudo conectar con Shalom. Revisá que el servidor esté encendido.";
+  }
+};
+
+$("oracionHoy").value = (load().logs[toISO(today())] || {}).oracion || "";
+$("cicloHabitual").value = load().cicloHabitual;
+render();
+</script>
+</body>
+</html>
