@@ -1,16 +1,16 @@
-// servidor-ia.js: backend mínimo para Shalom.
+// servidor-ia.js: backend mínimo para Shalom, usando Gemini (Google).
 // Requiere Node.js 18 o superior. No hace falta instalar nada más.
-// Uso en tu PC:  ANTHROPIC_API_KEY=tu_clave node servidor-ia.js
+// Uso en tu PC:  GEMINI_API_KEY=tu_clave node servidor-ia.js
 // La clave queda en el servidor. Nunca va en el HTML de la app.
 
 const http = require("http");
 
 const PORT = process.env.PORT || 3000;
-const API_KEY = process.env.ANTHROPIC_API_KEY;
-const MODEL = "claude-haiku-5-5";
-const ALLOWED_ORIGIN = process.env.ALLOWED_ORIGIN || "*"; // al publicar, poné el dominio de la app
+const API_KEY = process.env.GEMINI_API_KEY;
+const MODEL = process.env.GEMINI_MODEL || "gemini-3.5-flash-lite";
+const ALLOWED_ORIGIN = process.env.ALLOWED_ORIGIN || "*"; // al publicar, poné https://TUUSUARIO.github.io
 const MAX_PREGUNTA = 500;
-const MAX_CONSULTAS_HORA = 20; // por IP, para cuidar tu saldo de API
+const MAX_CONSULTAS_HORA = 20; // por conexión, para no gastar de más
 
 const SYSTEM_PROMPT = `
 Sos "Shalom", una consejería cristiana evangélica pentecostal con voz de pastora: cálida, cercana, humilde y firme en la fe. Hablás en español rioplatense (voseo), con frases cortas y claras.
@@ -96,29 +96,28 @@ function sanitizarResumen(r) {
   };
 }
 
-async function preguntarClaude(pregunta, resumen) {
+async function preguntarGemini(pregunta, resumen) {
   const contexto = resumen
     ? `Datos resumidos de la usuaria: fase "${resumen.fase}", día ${resumen.dia_del_ciclo} del ciclo, duración promedio ${resumen.duracion_promedio_ciclo} días.`
     : "No hay datos de ciclo registrados.";
 
-  const r = await fetch("https://api.anthropic.com/v1/messages", {
+  // La clave va en la dirección (?key=). Nunca la mostramos en los mensajes de error.
+  const url = `https://generativelanguage.googleapis.com/v1beta/models/${MODEL}:generateContent?key=${API_KEY}`;
+
+  const r = await fetch(url, {
     method: "POST",
-    headers: {
-      "x-api-key": API_KEY,
-      "anthropic-version": "2023-06-01",
-      "content-type": "application/json",
-    },
+    headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
-      model: MODEL,
-      max_tokens: 400,
-      system: SYSTEM_PROMPT,
-      messages: [{ role: "user", content: `${contexto}\n\nPregunta: ${pregunta}` }],
+      systemInstruction: { parts: [{ text: SYSTEM_PROMPT }] },
+      contents: [{ role: "user", parts: [{ text: `${contexto}\n\nPregunta: ${pregunta}` }] }],
+      generationConfig: { maxOutputTokens: 400 },
     }),
   });
-  if (!r.ok) throw new Error(`La API respondió ${r.status}`);
+  if (!r.ok) throw new Error(`Gemini respondió ${r.status}`);
 
   const j = await r.json();
-  return j.content.filter(b => b.type === "text").map(b => b.text).join("\n").trim();
+  const partes = (j.candidates && j.candidates[0] && j.candidates[0].content && j.candidates[0].content.parts) || [];
+  return partes.map(p => p.text || "").join("\n").trim();
 }
 
 const server = http.createServer(async (req, res) => {
@@ -148,11 +147,12 @@ const server = http.createServer(async (req, res) => {
   }
 
   if (!API_KEY) {
-    return enviarJSON(res, 500, { error: "Al servidor le falta ANTHROPIC_API_KEY." });
+    return enviarJSON(res, 500, { error: "Al servidor le falta GEMINI_API_KEY." });
   }
 
   try {
-    const respuesta = await preguntarClaude(pregunta, sanitizarResumen(body.resumen));
+    const respuesta = await preguntarGemini(pregunta, sanitizarResumen(body.resumen));
+    if (!respuesta) throw new Error("Respuesta vacía");
     enviarJSON(res, 200, { respuesta });
   } catch (err) {
     console.error(err.message);
@@ -160,5 +160,5 @@ const server = http.createServer(async (req, res) => {
   }
 });
 
-if (!API_KEY) console.warn("Aviso: falta ANTHROPIC_API_KEY. El servidor arranca, pero no va a responder.");
+if (!API_KEY) console.warn("Aviso: falta GEMINI_API_KEY. El servidor arranca, pero no va a responder.");
 server.listen(PORT, () => console.log(`Shalom IA escuchando en http://localhost:${PORT}/preguntar`));
